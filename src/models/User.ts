@@ -1,6 +1,7 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 
-export interface IUser {
+export interface IUser extends mongoose.Document {
+  _id: Types.ObjectId;
   handle: string;
   name: string;
   email: string;
@@ -42,7 +43,7 @@ const userSchema = new mongoose.Schema({
   recipes: [
     {
       type: String,
-      ref: "Recipie",
+      ref: "Recipe",
     },
   ],
 });

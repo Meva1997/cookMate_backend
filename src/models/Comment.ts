@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
-export interface IComment {
-  recipe: mongoose.Types.ObjectId; // Reference to Recipie model
+export interface IComment extends mongoose.Document {
+  recipe: mongoose.Types.ObjectId; // Reference to Recipe model
   author: mongoose.Types.ObjectId; // Reference to User model
   text: string;
 }
@@ -9,7 +9,7 @@ export interface IComment {
 const commentSchema = new mongoose.Schema({
   recipe: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Recipie",
+    ref: "Recipe",
     required: true,
   },
   author: {
