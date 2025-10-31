@@ -1,0 +1,33 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Backend with express.js, typeScript and mongoose for cookmate ",
+  "license": "ISC",
+  "author": "Alejandro Medina",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "colors": "^1.4.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-validator": "^7.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.2",
+    "slug": "^11.0.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.5",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/slug": "^5.0.9",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
