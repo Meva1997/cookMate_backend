@@ -7,6 +7,7 @@ import {
   getUserRecipes,
   updateUserProfile,
 } from "../handlers/userHandler";
+import { authenticateJWT } from "../middleware/authenticateJWT";
 
 const router = Router();
 
@@ -19,6 +20,7 @@ router.get(
 
 router.put(
   "/user/:userId",
+  authenticateJWT,
   param("userId").isString().withMessage("Valid userId is required"),
   body("handle").notEmpty().withMessage("Handle is required"),
   body("name").notEmpty().withMessage("Name is required"),

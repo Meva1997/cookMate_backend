@@ -82,9 +82,9 @@ router.delete(
 
 //? Recipe Actions like liking and favoriting
 
-router.post("/recipes/:recipeId/like", likeRecipe);
-router.delete("/recipes/:recipeId/like", unlikeRecipe);
-router.post("/recipes/:recipeId/favorite", favoriteRecipe);
-router.delete("/recipes/:recipeId/favorite", unfavoriteRecipe);
+router.post("/recipes/:recipeId/like", authenticateJWT, likeRecipe);
+router.delete("/recipes/:recipeId/like", authenticateJWT, unlikeRecipe);
+router.post("/recipes/:recipeId/favorite", authenticateJWT, favoriteRecipe);
+router.delete("/recipes/:recipeId/favorite", authenticateJWT, unfavoriteRecipe);
 
 export default router;
