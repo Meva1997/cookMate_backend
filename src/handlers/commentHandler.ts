@@ -30,6 +30,7 @@ export const addCommentToRecipe = async (req: Request, res: Response) => {
     res.status(201).json("Comment added successfully");
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
+    console.error(error);
   }
 };
 

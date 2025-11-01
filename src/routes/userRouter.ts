@@ -10,14 +10,14 @@ import {
 import { authenticateJWT } from "../middleware/authenticateJWT";
 import {
   emailExists,
-  userExists,
+  userExistsId,
   validateParamUserId,
 } from "../middleware/user";
 
 const router = Router();
 
 router.param("userId", validateParamUserId);
-router.param("userId", userExists);
+router.param("userId", userExistsId);
 
 router.get("/user/:userId", getUserProfile);
 
