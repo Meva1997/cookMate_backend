@@ -6,14 +6,7 @@ import { genereateJWT } from "../utils/jwt";
 
 export const createAccount = async (req: Request, res: Response) => {
   try {
-    const { email, password, handle, confirmPassword } = req.body;
-
-    const existingEmail = await User.findOne({ email });
-
-    if (existingEmail) {
-      const errorMessage = new Error("Email already in use");
-      return res.status(409).json({ error: errorMessage.message });
-    }
+    const { password, handle, confirmPassword } = req.body;
 
     const handleSlug = slug(handle, "");
     const handleExists = await User.findOne({ handle: handleSlug });
@@ -41,16 +34,12 @@ export const createAccount = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
 
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      const errorMessage = new Error("User not found");
-      return res.status(404).json({ error: errorMessage.message });
-    }
-
-    const isPasswordValid = await comparePassword(password, user.password);
+    const isPasswordValid = await comparePassword(
+      password,
+      req.foundUser.password
+    );
 
     if (!isPasswordValid) {
       const errorMessage = new Error("Invalid password");
@@ -58,9 +47,9 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = genereateJWT({
-      id: user._id,
-      handle: user.handle,
-      email: user.email,
+      _id: req.foundUser._id,
+      handle: req.foundUser.handle,
+      email: req.foundUser.email,
     });
 
     res.status(200).json(token);

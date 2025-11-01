@@ -1,21 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyJWT } from "../utils/jwt";
 
-// Extend Express Request interface to include 'user'
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-      };
-    }
-  }
-}
-
 export const authenticateJWT = (
   req: Request,
   res: Response,
-  next: Function
+  next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
 
@@ -27,7 +16,7 @@ export const authenticateJWT = (
 
   try {
     const decoded = verifyJWT(token);
-    req.user = { id: decoded["id"] }; // Attach user ID to request object
+    req.user = { id: decoded["_id"] }; // Attach user ID to request object
     next();
   } catch (error) {
     return res.status(403).json({ error: "Forbidden" });

@@ -8,39 +8,32 @@ import {
   updateUserProfile,
 } from "../handlers/userHandler";
 import { authenticateJWT } from "../middleware/authenticateJWT";
+import {
+  emailExists,
+  userExistsId,
+  validateParamUserId,
+} from "../middleware/user";
 
 const router = Router();
 
-router.get(
-  "/user/:userId",
-  param("userId").isString().withMessage("Valid userId is required"),
-  handleBodyErrors,
-  getUserProfile
-);
+router.param("userId", validateParamUserId);
+router.param("userId", userExistsId);
+
+router.get("/user/:userId", getUserProfile);
 
 router.put(
   "/user/:userId",
   authenticateJWT,
-  param("userId").isString().withMessage("Valid userId is required"),
   body("handle").notEmpty().withMessage("Handle is required"),
   body("name").notEmpty().withMessage("Name is required"),
   body("email").notEmpty().isEmail().withMessage("Valid email is required"),
+  emailExists,
   handleBodyErrors,
   updateUserProfile
 );
 
-router.get(
-  "/user/:userId/recipes",
-  param("userId").isString().withMessage("Valid userId is required"),
-  handleBodyErrors,
-  getUserRecipes
-);
+router.get("/user/:userId/recipes", getUserRecipes);
 
-router.get(
-  "/user/:userId/favorites",
-  param("userId").isString().withMessage("Valid userId is required"),
-  handleBodyErrors,
-  getUserFavorites
-);
+router.get("/user/:userId/favorites", getUserFavorites);
 
 export default router;

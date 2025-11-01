@@ -8,6 +8,6 @@ export const genereateJWT = (payload: JwtPayload) => {
 };
 
 // Function to verify JWT and return the decoded payload
-export const verifyJWT = (token: string) => {
+export const verifyJWT = (token: string): JwtPayload | string => {
   return jwt.verify(token, process.env.JWT_SECRET as string);
 };

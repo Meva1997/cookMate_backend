@@ -4,30 +4,41 @@ import {
   deleteCommentFromRecipe,
   getCommentsByRecipeId,
 } from "../handlers/commentHandler";
-import { body, param } from "express-validator";
+import { body } from "express-validator";
 import { authenticateJWT } from "../middleware/authenticateJWT";
+import {
+  validateRecipeIdParam,
+  validateCommentIdParam,
+} from "../middleware/comment";
+import { handleBodyErrors } from "../middleware/bodyErrors";
 
 const router = Router();
 
+// router.param("recipeId", validateRecipeIdParam);
+// router.param("commentId", validateCommentIdParam);
+
 router.get(
   "/recipes/:recipeId/comments",
-  param("recipeId").isMongoId().withMessage("Invalid recipe ID"),
+  validateRecipeIdParam,
+  handleBodyErrors,
   getCommentsByRecipeId
 );
 
 router.post(
   "/recipes/:recipeId/comments",
   authenticateJWT,
-  param("recipeId").isMongoId().withMessage("Invalid recipe ID"),
+  validateRecipeIdParam,
   body("text").isString().withMessage("Comment text is required"),
+  handleBodyErrors,
   addCommentToRecipe
 );
 
 router.delete(
   "/recipes/:recipeId/comments/:commentId",
   authenticateJWT,
-  param("recipeId").isMongoId().withMessage("Invalid recipe ID"),
-  param("commentId").isMongoId().withMessage("Invalid comment ID"),
+  validateRecipeIdParam,
+  validateCommentIdParam,
+  handleBodyErrors,
   deleteCommentFromRecipe
 );
 

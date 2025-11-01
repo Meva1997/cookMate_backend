@@ -3,38 +3,18 @@ import User from "../models/User";
 import slug from "slug";
 
 export const getUserProfile = async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.params;
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      const errorMessage = new Error("User not found");
-      return res.status(404).json({ error: errorMessage.message });
-    }
-
-    res.status(200).json({
-      id: user._id,
-      handle: user.handle,
-      name: user.name,
-      email: user.email,
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
+  res.status(200).json({
+    id: req.foundUser._id.toString(),
+    handle: req.foundUser?.handle,
+    name: req.foundUser?.name,
+    email: req.foundUser?.email,
+  });
 };
 
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { handle, name, email } = req.body;
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      const errorMessage = new Error("User not found");
-      return res.status(404).json({ error: errorMessage.message });
-    }
 
     const handleSlug = slug(handle, "");
     const handleExists = await User.findOne({ handle: handleSlug });
@@ -44,26 +24,19 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       return res.status(409).json({ error: errorMessage.message });
     }
 
-    const emailExists = await User.findOne({ email });
-
-    if (emailExists && emailExists._id.toString() !== userId) {
-      const errorMessage = new Error("Email already in use");
-      return res.status(409).json({ error: errorMessage.message });
-    }
-
     if (
-      user.handle === handleSlug &&
-      user.email === email &&
-      user.name === name
+      req.foundUser.handle === handleSlug &&
+      req.foundUser.email === email &&
+      req.foundUser.name === name
     ) {
       return res.status(200).json("No changes detected in profile");
     }
 
-    user.handle = handle || handleSlug;
-    user.name = name || user.name;
-    user.email = email || user.email;
+    req.foundUser.handle = handle || handleSlug;
+    req.foundUser.name = name || req.foundUser.name;
+    req.foundUser.email = email || req.foundUser.email;
 
-    await user.save();
+    await req.foundUser.save();
 
     res.status(200).json("User profile updated successfully");
   } catch (error) {
@@ -76,11 +49,6 @@ export const getUserRecipes = async (req: Request, res: Response) => {
     const { userId } = req.params;
 
     const user = await User.findById(userId).populate("recipes");
-
-    if (!user) {
-      const errorMessage = new Error("User not found");
-      return res.status(404).json({ error: errorMessage.message });
-    }
 
     if (user.recipes.length === 0) {
       return res
@@ -99,11 +67,6 @@ export const getUserFavorites = async (req: Request, res: Response) => {
     const { userId } = req.params;
 
     const user = await User.findById(userId).populate("favorites");
-
-    if (!user) {
-      const errorMessage = new Error("User not found");
-      return res.status(404).json({ error: errorMessage.message });
-    }
 
     if (user.favorites.length === 0) {
       return res
