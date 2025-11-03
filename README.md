@@ -48,6 +48,14 @@ A RESTful API for managing recipes, user authentication, favorites, likes, and c
    ```
    The server will run on `http://localhost:4000`.
 
+## API Documentation
+
+Interactive API documentation is available via Swagger UI:
+
+- **URL:** [http://localhost:4000/docs](http://localhost:4000/docs)
+
+You can explore all endpoints, view request/response schemas, and test API calls directly from the browser. For protected endpoints, use the "Authorize" button to enter your JWT token.
+
 ## API Endpoints
 
 ### Auth
