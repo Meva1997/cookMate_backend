@@ -111,96 +111,149 @@ export const deleteRecipe = async (req: Request, res: Response) => {
 //? Recipe Actions like liking and favoriting
 
 export const likeRecipe = async (req: Request, res: Response) => {
-  try {
-    const userObjectId = new mongoose.Types.ObjectId(req.user?.id);
+  const { id } = req.params;
+  const userId = req.user.id;
+  const recipe = await Recipe.findById(id);
+  if (!recipe) return res.status(404).json({ error: "Recipe not found" });
 
-    // Check if user has already liked the recipe
-    if (req.recipe.likes.some((like) => like.equals(userObjectId))) {
-      const errorMessage = new Error("Recipe already liked");
-      return res.status(400).json({ error: errorMessage.message });
-    }
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  if (!recipe.likes.includes(userObjectId)) recipe.likes.push(userObjectId);
+  await recipe.save();
 
-    req.recipe.likes.push(userObjectId);
-    await req.recipe.save();
-
-    res.status(200).json("Recipe liked successfully");
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
+  res.status(200).json({ likes: recipe.likes.length });
 };
+
+// export const likeRecipe = async (req: Request, res: Response) => {
+//   try {
+//     const userObjectId = new mongoose.Types.ObjectId(req.user?.id);
+
+//     // Check if user has already liked the recipe
+//     if (req.recipe.likes.some((like) => like.equals(userObjectId))) {
+//       const errorMessage = new Error("Recipe already liked");
+//       return res.status(400).json({ error: errorMessage.message });
+//     }
+
+//     req.recipe.likes.push(userObjectId);
+//     await req.recipe.save();
+
+//     res.status(200).json("Recipe liked successfully");
+//   } catch (error) {
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
 
 export const unlikeRecipe = async (req: Request, res: Response) => {
-  try {
-    const userObjectId = new mongoose.Types.ObjectId(req.user?.id);
+  const { id } = req.params;
+  const userId = req.user.id;
+  const recipe = await Recipe.findById(id);
+  if (!recipe) return res.status(404).json({ error: "Recipe not found" });
 
-    // Check if user has liked the recipe
-    if (!req.recipe.likes.some((like) => like.equals(userObjectId))) {
-      const errorMessage = new Error("Recipe not liked yet");
-      return res.status(400).json({ error: errorMessage.message });
-    }
+  recipe.likes = recipe.likes.filter((uid) => uid.toString() !== userId);
+  await recipe.save();
 
-    req.recipe.likes = req.recipe.likes.filter(
-      (like) => !like.equals(userObjectId)
-    );
-    await req.recipe.save();
-
-    res.status(200).json("Recipe unliked successfully");
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
+  res.status(200).json({ likes: recipe.likes.length });
 };
+
+// export const unlikeRecipe = async (req: Request, res: Response) => {
+//   try {
+//     const userObjectId = new mongoose.Types.ObjectId(req.user?.id);
+
+//     // Check if user has liked the recipe
+//     if (!req.recipe.likes.some((like) => like.equals(userObjectId))) {
+//       const errorMessage = new Error("Recipe not liked yet");
+//       return res.status(400).json({ error: errorMessage.message });
+//     }
+
+//     req.recipe.likes = req.recipe.likes.filter(
+//       (like) => !like.equals(userObjectId)
+//     );
+//     await req.recipe.save();
+
+//     res.status(200).json("Recipe unliked successfully");
+//   } catch (error) {
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
 
 export const favoriteRecipe = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.id;
+  const { id } = req.params;
+  const userId = req.user.id;
+  const recipe = await Recipe.findById(id);
+  if (!recipe) return res.status(404).json({ error: "Recipe not found" });
 
-    const userObjectId = new mongoose.Types.ObjectId(userId);
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  if (!recipe.favorites.includes(userObjectId))
+    recipe.favorites.push(userObjectId);
+  await recipe.save();
 
-    // Check if user has already favorited the recipe
-    if (
-      req.recipe.favorites.some((favorite) => favorite.equals(userObjectId))
-    ) {
-      const errorMessage = new Error("Recipe already favorited");
-      return res.status(400).json({ error: errorMessage.message });
-    }
-
-    req.recipe.favorites.push(userObjectId);
-    await req.recipe.save();
-
-    await User.findByIdAndUpdate(userId, {
-      $addToSet: { favorites: req.recipe._id },
-    });
-
-    res.status(200).json("Recipe favorited successfully");
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
+  res.status(200).json({ favorites: recipe.favorites.length });
 };
+
+// export const favoriteRecipe = async (req: Request, res: Response) => {
+//   try {
+//     const userId = req.user?.id;
+
+//     const userObjectId = new mongoose.Types.ObjectId(userId);
+
+//     // Check if user has already favorited the recipe
+//     if (
+//       req.recipe.favorites.some((favorite) => favorite.equals(userObjectId))
+//     ) {
+//       const errorMessage = new Error("Recipe already favorited");
+//       return res.status(400).json({ error: errorMessage.message });
+//     }
+
+//     req.recipe.favorites.push(userObjectId);
+//     await req.recipe.save();
+
+//     await User.findByIdAndUpdate(userId, {
+//       $addToSet: { favorites: req.recipe._id },
+//     });
+
+//     res.status(200).json("Recipe favorited successfully");
+//   } catch (error) {
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
 
 export const unfavoriteRecipe = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    const userObjectId = new mongoose.Types.ObjectId(userId);
+  const { id } = req.params;
+  const userId = req.user.id;
+  const recipe = await Recipe.findById(id);
+  if (!recipe) return res.status(404).json({ error: "Recipe not found" });
 
-    // Check if user has favorited the recipe
-    if (
-      !req.recipe.favorites.some((favorite) => favorite.equals(userObjectId))
-    ) {
-      const errorMessage = new Error("Recipe not favorited yet");
-      return res.status(400).json({ error: errorMessage.message });
-    }
+  recipe.favorites = recipe.favorites.filter(
+    (uid) => uid.toString() !== userId
+  );
+  await recipe.save();
 
-    req.recipe.favorites = req.recipe.favorites.filter(
-      (favorite) => !favorite.equals(userObjectId)
-    );
-    await req.recipe.save();
-
-    await User.findByIdAndUpdate(userId, {
-      $pull: { favorites: req.recipe._id },
-    });
-
-    res.status(200).json("Recipe unfavorited successfully");
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
+  res.status(200).json({ favorites: recipe.favorites.length });
 };
+
+// export const unfavoriteRecipe = async (req: Request, res: Response) => {
+//   try {
+//     const userId = req.user?.id;
+//     const userObjectId = new mongoose.Types.ObjectId(userId);
+
+//     // Check if user has favorited the recipe
+//     if (
+//       !req.recipe.favorites.some((favorite) => favorite.equals(userObjectId))
+//     ) {
+//       const errorMessage = new Error("Recipe not favorited yet");
+//       return res.status(400).json({ error: errorMessage.message });
+//     }
+
+//     req.recipe.favorites = req.recipe.favorites.filter(
+//       (favorite) => !favorite.equals(userObjectId)
+//     );
+//     await req.recipe.save();
+
+//     await User.findByIdAndUpdate(userId, {
+//       $pull: { favorites: req.recipe._id },
+//     });
+
+//     res.status(200).json("Recipe unfavorited successfully");
+//   } catch (error) {
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
