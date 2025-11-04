@@ -52,6 +52,8 @@ A RESTful API for managing recipes, user authentication, favorites, likes, and c
 
 Interactive API documentation is available via Swagger UI:
 
+![Swagger UI Screenshot](./src/public/backendScreenShots/CookMate-swagger.png)
+
 - **URL:** [http://localhost:4000/docs](http://localhost:4000/docs)
 
 You can explore all endpoints, view request/response schemas, and test API calls directly from the browser. For protected endpoints, use the "Authorize" button to enter your JWT token.
