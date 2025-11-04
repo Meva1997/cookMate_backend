@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import Recipe from "../models/Recipe";
 import User from "../models/User";
 import mongoose from "mongoose";
