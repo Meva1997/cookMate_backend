@@ -32,8 +32,13 @@ import User from "../../models/User";
 import { hashPassword } from "../../utils/auth";
 import { createAccount, login } from "../../handlers/authHandler";
 import { handleBodyErrors } from "../../middleware/bodyErrors";
-import { emailExists, registerBody } from "../../middleware/user";
+import {
+  emailExists,
+  loginEmailExists,
+  registerBody,
+} from "../../middleware/user";
 import { usersMock } from "../mocks/user";
+import { body } from "express-validator";
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -302,7 +307,7 @@ describe("AuthController - createAccount", () => {
 });
 
 describe("AuthController - login", () => {
-  it("Should login successfully", async () => {
+  it("Should login successfully and return a JWT token", async () => {
     const req = createRequest({
       method: "POST",
       url: "/api/auth/login",
@@ -332,5 +337,174 @@ describe("AuthController - login", () => {
     expect(res.statusCode).not.toBe(401);
     expect(res.statusCode).not.toBe(404);
     expect(res.statusCode).not.toBe(500);
+  });
+
+  it("Should return 400 if missing or invalid fields", async () => {
+    const req = createRequest({
+      method: "POST",
+      url: "/api/auth/login",
+      body: {
+        email: "invalid-email",
+        password: "",
+      },
+    });
+
+    const res = createResponse();
+
+    // run the same validators used in the router
+    await body("email")
+      .notEmpty()
+      .isEmail()
+      .withMessage("Email is required")
+      .run(req);
+    await body("password")
+      .notEmpty()
+      .withMessage("Password is required")
+      .run(req);
+
+    await handleBodyErrors(req, res, () => {});
+
+    const data = res._getJSONData();
+
+    expect(data).toHaveProperty("errors");
+    expect(data.errors).toHaveLength(2);
+    expect(data.errors[0].msg).toBe("Email is required");
+    expect(data.errors[1].msg).toBe("Password is required");
+    expect(res.statusCode).toBe(400);
+
+    expect(res.statusCode).not.toBe(200);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.statusCode).not.toBe(404);
+    expect(res.statusCode).not.toBe(500);
+  });
+
+  it("Should return 401 if email does not exist (user not found)", async () => {
+    const req = createRequest({
+      method: "POST",
+      url: "/api/auth/login",
+      body: {
+        email: "wrong@example.com",
+        password: "hashed-password",
+      },
+    });
+
+    const res = createResponse();
+
+    const findUser = usersMock.find((user) => user.email === req.body.email);
+
+    (User.findOne as jest.Mock).mockResolvedValue(findUser);
+
+    req.foundUser = findUser as any;
+
+    // Simula que la contraseña no coincide
+    const { comparePassword } = require("../../utils/auth");
+    (comparePassword as jest.Mock).mockResolvedValue(true);
+
+    await loginEmailExists(req as any, res as any, () => {});
+
+    const data = res._getJSONData();
+    expect(data).toEqual({ error: "User not found" });
+    expect(res.statusCode).toBe(404);
+
+    expect(res.statusCode).not.toBe(200);
+    expect(res.statusCode).not.toBe(400);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.statusCode).not.toBe(500);
+  });
+
+  it("Should return 401 if password is incorrect", async () => {
+    const req = createRequest({
+      method: "POST",
+      url: "/api/auth/login",
+      body: {
+        email: "john@example.com",
+        password: "wrong-password",
+      },
+    });
+
+    const res = createResponse();
+
+    const findUser = usersMock.find((user) => user.email === req.body.email);
+
+    (User.findOne as jest.Mock).mockResolvedValue(findUser);
+
+    req.foundUser = findUser as any;
+
+    // Simula que la contraseña no coincide
+    const { comparePassword } = require("../../utils/auth");
+    (comparePassword as jest.Mock).mockResolvedValue(false);
+
+    await loginEmailExists(req as any, res as any, () => {});
+
+    await login(req, res);
+
+    await handleBodyErrors(req, res, () => {});
+
+    const data = res._getJSONData();
+
+    expect(data).toEqual({ error: "Invalid password" });
+    expect(res.statusCode).toBe(401);
+
+    expect(res.statusCode).not.toBe(200);
+    expect(res.statusCode).not.toBe(400);
+    expect(res.statusCode).not.toBe(404);
+    expect(res.statusCode).not.toBe(500);
+  });
+
+  it("Should return 404 if user not found in loginEmailExists middleware", async () => {
+    const req = createRequest({
+      method: "POST",
+      url: "/api/auth/login",
+      body: {
+        email: "wrong@example.com",
+        password: "hashed-password",
+      },
+    });
+
+    const res = createResponse();
+
+    const findUser = usersMock.find((user) => user.email === req.body.email);
+
+    (User.findOne as jest.Mock).mockResolvedValue(findUser);
+
+    req.foundUser = findUser as any;
+
+    await loginEmailExists(req as any, res as any, () => {});
+
+    const data = res._getJSONData();
+    expect(data).toEqual({ error: "User not found" });
+    expect(res.statusCode).toBe(404);
+
+    expect(res.statusCode).not.toBe(200);
+    expect(res.statusCode).not.toBe(400);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.statusCode).not.toBe(500);
+  });
+
+  it("Should return 500 on server error", async () => {
+    const req = createRequest({
+      method: "POST",
+      url: "/api/auth/login",
+      body: {
+        email: "john@example.com",
+        password: "hashed-password",
+      },
+    });
+
+    const res = createResponse();
+
+    (User.findOne as jest.Mock).mockRejectedValue(new Error());
+
+    await login(req, res);
+
+    const data = res._getJSONData();
+
+    expect(data).toEqual({ error: "Internal server error" });
+    expect(res.statusCode).toBe(500);
+
+    expect(res.statusCode).not.toBe(200);
+    expect(res.statusCode).not.toBe(400);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.statusCode).not.toBe(404);
   });
 });
