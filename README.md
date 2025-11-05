@@ -58,6 +58,134 @@ Interactive API documentation is available via Swagger UI:
 
 You can explore all endpoints, view request/response schemas, and test API calls directly from the browser. For protected endpoints, use the "Authorize" button to enter your JWT token.
 
+### Endpoints and middleware covered by unit tests
+
+The test suite includes focused unit tests that exercise handlers and middlewares without touching the database or external services (those are mocked). Current coverage includes the following endpoints and related middleware logic:
+
+- Auth endpoints
+
+  - POST /auth/register
+    - createAccount handler
+    - Validation flow (registerBody + handleBodyErrors)
+    - Duplicate handle/email checks (user existence middleware)
+    - Password hashing flow is mocked to avoid bcrypt I/O
+  - POST /auth/login
+    - login handler
+    - Validation flow for email/password
+    - loginEmailExists middleware (email existence)
+    - JWT generation and comparison are mocked
+
+- User endpoints
+
+  - GET /user/:userId
+    - getUserProfile handler
+    - userExistsId middleware behavior (user found / not found / server error)
+  - PUT /user/:userId
+    - updateUserProfile handler
+    - Authorization checks (authenticated user vs target user)
+    - Handle/email uniqueness checks
+    - Save/update flow using a document-like mock (instance.save mocked)
+  - GET /user/:userId/recipes
+    - getUserRecipes handler
+    - Mocks populate() behavior to return user's recipes
+
+- Recipe endpoints (unit-level)
+
+  - Tests exercise recipe handlers for create/read/update/delete operations
+  - Authorization and ownership checks (only author can edit/delete)
+  - Likes/favorites behavior is covered in unit tests with mocked model methods
+
+- Middleware & utilities
+  - Validation error handler (handleBodyErrors)
+  - authenticateJWT middleware is exercised in tests (success/unauthorized cases)
+  - email/handle existence middlewares (emailExists, userExistsId)
+  - Utilities like slug, jwt, and password helpers are mocked to isolate handlers
+
+Notes:
+
+- Tests use fixtures in `src/tests/mocks/*` and mock `../../models/*` to avoid DB access.
+- Some ESM modules (e.g. `slug`) are mocked in tests to prevent runtime syntax issues.
+- For edge-case behavior, tests include success, validation failure (400), conflict (409), unauthorized (401), and internal error (500) paths.
+
+## Unit testing
+
+Run the test suite with Jest:
+
+- Run all tests:
+
+  ```bash
+  npm test
+  ```
+
+- Run a single test file:
+
+  ```bash
+  npx jest src/tests/unit/UserController.test.ts
+  # or
+  npm test -- src/tests/unit/UserController.test.ts
+  ```
+
+- Watch mode (re-run tests on file changes):
+
+  ```bash
+  npm test -- --watch
+  ```
+
+- Run with coverage report:
+
+  ```bash
+  npm test -- --coverage
+  ```
+
+- Troubleshooting and tips
+
+  - If a test times out or you need to diagnose handles:
+    ```bash
+    npm test -- --detectOpenHandles
+    ```
+  - ts-jest warning (TS151002): either enable isolatedModules in tsconfig.json:
+    ```json
+    {
+      "compilerOptions": {
+        "isolatedModules": true
+      }
+    }
+    ```
+    or silence the diagnostic in jest.config.js:
+    ```javascript
+    // jest.config.js
+    module.exports = {
+      globals: {
+        "ts-jest": {
+          diagnostics: {
+            ignoreCodes: [151002],
+          },
+        },
+      },
+    };
+    ```
+  - Some third‑party ESM modules (e.g. `slug`) may need mocking in tests. Options:
+    - Add a per-test mock at the top of the test file:
+      ```typescript
+      jest.mock("slug", () => {
+        const fn = (s: unknown) => String(s).toLowerCase().replace(/\s+/g, "-");
+        (fn as any).default = fn;
+        return fn;
+      });
+      ```
+    - Or create a module mock and map it in jest.config.js:
+      ```javascript
+      moduleNameMapper: { "^slug$": "<rootDir>/src/tests/__mocks__/slug.js" }
+      ```
+  - Use `setupFilesAfterEnv` or a shared test setup file to centralize common mocks and fixtures.
+
+- Run tests on macOS terminal (example):
+  ```bash
+  # from project root
+  cd /Users/$(whoami)/Desktop/cookmate/backend
+  npm test
+  ```
+
 ## API Endpoints
 
 ### Auth
