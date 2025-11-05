@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import { body, param } from "express-validator";
 import User, { IUser } from "../models/User";
 import { Document } from "mongoose";
+import { handleBodyErrors } from "./bodyErrors";
 
 declare global {
   namespace Express {
@@ -116,5 +117,6 @@ export const registerBody = async (
       return true;
     })
     .run(req);
+
   next();
 };

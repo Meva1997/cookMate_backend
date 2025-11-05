@@ -94,8 +94,8 @@ const router = Router();
 // Define your auth routes here
 router.post(
   "/auth/register",
-  registerBody,
   emailExists,
+  registerBody,
   handleBodyErrors,
   createAccount
 );
