@@ -1,14 +1,21 @@
-import { NextFunction } from "express";
 import { createRequest, createResponse } from "node-mocks-http";
 import { recipesMock } from "../mocks/recipe";
 import {
   getAllRecipes,
   getRecipeById,
   createRecipe,
+  updateRecipe,
+  deleteRecipe,
 } from "../../handlers/recipeHandler";
 import Recipe from "../../models/Recipe";
 import { findRecipeById } from "../../middleware/recipe";
 import User from "../../models/User";
+import jwt from "jsonwebtoken";
+
+jest.mock("jsonwebtoken", () => ({
+  verify: jest.fn(),
+  sign: jest.fn(),
+}));
 
 jest.mock("../../models/Recipe", () => {
   const RecipeMock = jest.fn().mockImplementation((data) => ({
@@ -20,12 +27,21 @@ jest.mock("../../models/Recipe", () => {
   (RecipeMock as any).find = jest.fn();
   (RecipeMock as any).findById = jest.fn();
   (RecipeMock as any).create = jest.fn();
+  (RecipeMock as any).deleteOne = jest.fn();
   return RecipeMock;
 });
 
 jest.mock("../../models/User", () => ({
   findByIdAndUpdate: jest.fn(),
 }));
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  (jwt.verify as jest.Mock).mockImplementation(() => ({
+    id: "60d0fe4f5311236168a109ca",
+    email: "test@example.com",
+  }));
+});
 
 describe("RecipeController.getAll", () => {
   it("should return all 2 recipes", async () => {
@@ -236,5 +252,223 @@ describe("RecipeController.create", () => {
 });
 
 describe("RecipeController.update", () => {
-  it("Should update an existing recipe and respond with status 200", async () => {});
+  it("Should update an existing recipe and respond with status 200", async () => {
+    const req = createRequest({
+      method: "PUT",
+      url: "/api/recipes",
+      params: { recipeId: "6908b5849c50a864a0f0bb13" },
+      body: {
+        title: "Updated Recipe Title",
+        description: "Updated description",
+        ingredients: ["Updated Ingredient 1", "Updated Ingredient 2"],
+        instructions: ["Updated instruction 1", "Updated instruction 2"],
+        category: "Updated Category",
+        author: "60d0fe4f5311236168a109ca",
+      },
+    });
+
+    const res = createResponse();
+
+    const recipe = recipesMock.find(
+      (r) => r._id.toString() === req.params.recipeId
+    );
+
+    const updatedRecipe = { ...recipe, ...req.body };
+
+    req.recipe = {
+      ...recipe,
+      save: jest.fn().mockResolvedValue(updatedRecipe),
+    } as any;
+
+    (Recipe.findById as jest.Mock).mockResolvedValue(req.recipe);
+
+    await updateRecipe(req, res);
+
+    const data = res._getJSONData();
+
+    expect(res.statusCode).toBe(200);
+    expect(data).toEqual("Recipe updated successfully");
+
+    expect(req.recipe.save).toHaveBeenCalled();
+    expect(req.recipe.save).toHaveBeenCalledTimes(1);
+
+    expect(res.statusCode).not.toBe(400);
+    expect(res.statusCode).not.toBe(404);
+    expect(res.statusCode).not.toBe(500);
+  });
+
+  it("Should handle errors during recipe update", async () => {
+    const req = createRequest({
+      method: "PUT",
+      url: "/api/recipes",
+      params: { recipeId: "6908b5849c50a864a0f0bb13" },
+      body: {
+        title: "Updated Recipe Title",
+        description: "Updated description",
+        ingredients: ["Updated Ingredient 1", "Updated Ingredient 2"],
+        instructions: ["Updated instruction 1", "Updated instruction 2"],
+        category: "Updated Category",
+        author: "60d0fe4f5311236168a109ca",
+      },
+    });
+
+    const res = createResponse();
+
+    const recipe = recipesMock.find(
+      (r) => r._id.toString() === req.params.recipeId
+    );
+
+    req.recipe = {
+      ...recipe,
+      save: jest.fn().mockRejectedValue(new Error()),
+    } as any;
+
+    (Recipe.findById as jest.Mock).mockResolvedValue(req.recipe);
+
+    await updateRecipe(req, res);
+
+    const data = res._getJSONData();
+
+    expect(res.statusCode).toBe(500);
+    expect(data).toEqual({ error: "Internal server error" });
+
+    expect(req.recipe.save).toHaveBeenCalled();
+
+    expect(res.statusCode).not.toBe(200);
+    expect(res.statusCode).not.toBe(400);
+    expect(res.statusCode).not.toBe(404);
+  });
+});
+
+describe("RecipeController.delete", () => {
+  it("Should delete an existing recipe and respond with status 200", async () => {
+    const req = createRequest({
+      method: "DELETE",
+      url: "/api/recipes",
+      params: { recipeId: "6908b5849c50a864a0f0bb13" },
+      headers: {
+        authorization: "Bearer token",
+      },
+    });
+
+    const res = createResponse();
+
+    const recipe = recipesMock.find(
+      (r) => r._id.toString() === req.params.recipeId
+    );
+
+    req.user = { id: "60d0fe4f5311236168a109ca" } as any;
+
+    req.recipe = {
+      ...recipe,
+      author: "60d0fe4f5311236168a109ca",
+      deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
+    } as any;
+
+    (Recipe.findById as jest.Mock).mockResolvedValue(req.recipe);
+
+    await deleteRecipe(req, res);
+
+    const data = res._getJSONData();
+
+    expect(res.statusCode).toBe(200);
+    expect(data).toEqual("Recipe deleted successfully");
+
+    expect(req.recipe.deleteOne).toHaveBeenCalled();
+    expect(req.recipe.deleteOne).toHaveBeenCalledTimes(1);
+
+    expect(res.statusCode).not.toBe(400);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.statusCode).not.toBe(403);
+    expect(res.statusCode).not.toBe(404);
+    expect(res.statusCode).not.toBe(500);
+  });
+  it("Should try to delete an existing recipe without authentication and return 403", async () => {
+    const req = createRequest({
+      method: "DELETE",
+      url: "/api/recipes",
+      params: { recipeId: "6908b5849c50a864a0f0bb13" },
+    });
+
+    const res = createResponse();
+
+    const recipe = recipesMock.find(
+      (r) => r._id.toString() === req.params.recipeId
+    );
+
+    (Recipe.findById as jest.Mock).mockResolvedValue(recipe);
+
+    await deleteRecipe(req, res);
+
+    const data = res._getJSONData();
+
+    expect(res.statusCode).toBe(403);
+    expect(data).toEqual({ error: "Unauthorized to delete this recipe" });
+
+    expect(res.statusCode).not.toBe(200);
+    expect(res.statusCode).not.toBe(404);
+    expect(res.statusCode).not.toBe(500);
+  });
+
+  it("Should try to delete a non-existing recipe and return 404", async () => {
+    const req = createRequest({
+      method: "DELETE",
+      url: "/api/recipes",
+      params: { recipeId: "6908b5849c50a864a0f0bb20" },
+    });
+
+    const res = createResponse();
+
+    const recipe = recipesMock.find(
+      (r) => r._id.toString() === req.params.recipeId
+    );
+
+    (Recipe.findById as jest.Mock).mockResolvedValue(recipe);
+
+    await deleteRecipe(req, res);
+
+    const data = res._getJSONData();
+
+    expect(res.statusCode).toBe(404);
+    expect(data).toEqual({ error: "Recipe not found" });
+
+    expect(data).not.toEqual("Recipe deleted successfully");
+    expect(res.statusCode).not.toBe(200);
+    expect(res.statusCode).not.toBe(500);
+  });
+
+  it("Should handle errors during recipe deletion", async () => {
+    const req = createRequest({
+      method: "DELETE",
+      url: "/api/recipes",
+      params: { recipeId: "6908b5849c50a864a0f0bb13" },
+    });
+
+    const res = createResponse();
+
+    const recipe = recipesMock.find(
+      (r) => r._id.toString() === req.params.recipeId
+    );
+    req.user = { id: "60d0fe4f5311236168a109ca" } as any;
+
+    req.recipe = {
+      ...recipe,
+      deleteOne: jest.fn().mockRejectedValue(new Error()),
+    } as any;
+
+    (Recipe.findById as jest.Mock).mockResolvedValue(req.recipe);
+
+    await deleteRecipe(req, res);
+
+    const data = res._getJSONData();
+
+    expect(res.statusCode).toBe(500);
+    expect(data).toEqual({ error: "Internal server error" });
+
+    expect(req.recipe.deleteOne).toHaveBeenCalled();
+
+    expect(data).not.toEqual("Recipe deleted successfully");
+    expect(res.statusCode).not.toBe(200);
+    expect(res.statusCode).not.toBe(404);
+  });
 });
