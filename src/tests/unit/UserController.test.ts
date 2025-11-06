@@ -16,7 +16,6 @@ import { usersMock } from "../mocks/user";
 import User from "../../models/User";
 import { authenticateJWT } from "../../middleware/authenticateJWT";
 import { recipesMock } from "../mocks/recipe";
-import { populate } from "dotenv";
 
 beforeEach(() => {
   jest.clearAllMocks();
