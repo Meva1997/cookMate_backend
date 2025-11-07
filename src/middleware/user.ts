@@ -80,6 +80,11 @@ export const loginEmailExists = async (
   try {
     const { email } = req.body;
 
+    if (!email) {
+      const errorMessage = new Error("Email is required");
+      return res.status(400).json({ error: errorMessage.message });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {

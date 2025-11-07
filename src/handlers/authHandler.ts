@@ -36,6 +36,11 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { password } = req.body;
 
+    if (!password) {
+      const errorMessage = new Error("Password is required");
+      return res.status(400).json({ error: errorMessage.message });
+    }
+
     const isPasswordValid = await comparePassword(
       password,
       req.foundUser.password
