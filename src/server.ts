@@ -1,12 +1,14 @@
 import express from "express";
 import swaggerUI from "swagger-ui-express";
 import swaggerSpec, { swaggerUiOptions } from "./config/swagger";
+import cors from "cors";
 import authRouter from "./routes/authRouter";
 import userRouter from "./routes/userRouter";
 import recipieRouter from "./routes/recipieRouter";
 import commentRouter from "./routes/commentRouter";
 import { connectDB } from "./config/db";
 import "dotenv/config";
+import corsOptions from "./config/cors";
 
 const app = express();
 
@@ -14,6 +16,9 @@ const app = express();
 app.use(express.json());
 
 connectDB();
+
+//CORS
+app.use(cors(corsOptions));
 
 //routing
 app.use("/api", authRouter);
