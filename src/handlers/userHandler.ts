@@ -11,6 +11,18 @@ export const getUserProfile = async (req: Request, res: Response) => {
   });
 };
 
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await User.find(
+      {},
+      " _id handle name email favorites recipes"
+    );
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;

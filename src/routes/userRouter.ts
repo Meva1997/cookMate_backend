@@ -2,6 +2,7 @@ import { body, param } from "express-validator";
 import { Router } from "express";
 import { handleBodyErrors } from "../middleware/bodyErrors";
 import {
+  getAllUsers,
   getUserFavorites,
   getUserProfile,
   getUserRecipes,
@@ -74,6 +75,8 @@ router.param("userId", userExistsId);
  */
 
 router.get("/user/:userId", getUserProfile);
+
+router.get("/user", getAllUsers);
 
 /**
  * @swagger
