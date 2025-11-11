@@ -8,6 +8,8 @@ export const getUserProfile = async (req: Request, res: Response) => {
     handle: req.foundUser?.handle,
     name: req.foundUser?.name,
     email: req.foundUser?.email,
+    recipes: req.foundUser?.recipes,
+    favorites: req.foundUser?.favorites,
   });
 };
 
