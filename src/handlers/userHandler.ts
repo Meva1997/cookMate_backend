@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/User";
 import slug from "slug";
+import Recipe from "../models/Recipe";
 
 export const getUserProfile = async (req: Request, res: Response) => {
   res.status(200).json({
@@ -82,13 +83,23 @@ export const getUserFavorites = async (req: Request, res: Response) => {
 
     const user = await User.findById(userId).populate("favorites");
 
-    if (user.favorites.length === 0) {
-      return res
-        .status(200)
-        .json("No favorites found for this user, start adding some!");
+    if (!user) {
+      const errorMessage = new Error("User not found");
+      return res.status(404).json({ error: errorMessage.message });
     }
 
-    res.status(200).json(user.favorites);
+    const favIds = Array.isArray(user.favorites) ? user.favorites : [];
+
+    if (favIds.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    const recipes = await Recipe.find({
+      _id: { $in: favIds },
+      "likes.0": { $exists: true },
+    }).lean();
+
+    res.status(200).json(recipes);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
