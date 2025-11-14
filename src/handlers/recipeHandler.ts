@@ -275,9 +275,7 @@ export const uploadRecipeImage = async (req: Request, res: Response) => {
             return res.status(500).json({ error: errorMessage.message });
           }
           if (result) {
-            req.recipe.image = result.secure_url;
-            await req.recipe.save();
-            res.json({ imageUrl: result.secure_url });
+            return res.status(200).json({ imageUrl: result.secure_url });
           }
         }
       );
