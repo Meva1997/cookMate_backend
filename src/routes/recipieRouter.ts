@@ -314,12 +314,7 @@ router.delete("/recipes/:recipeId", authenticateJWT, deleteRecipe);
 
 //? Recipe action for uploading images
 
-router.post(
-  "/recipes/:recipeId/upload-image",
-  authenticateJWT,
-  findRecipeById,
-  uploadRecipeImage
-);
+router.post("/recipes/upload-image", authenticateJWT, uploadRecipeImage);
 
 //? Recipe Actions like liking and favoriting
 
