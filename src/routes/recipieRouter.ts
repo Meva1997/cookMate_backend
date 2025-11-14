@@ -9,6 +9,7 @@ import {
   unfavoriteRecipe,
   unlikeRecipe,
   updateRecipe,
+  uploadRecipeImage,
 } from "../handlers/recipeHandler";
 import { body, param } from "express-validator";
 import { handleBodyErrors } from "../middleware/bodyErrors";
@@ -310,6 +311,15 @@ router.put(
  */
 
 router.delete("/recipes/:recipeId", authenticateJWT, deleteRecipe);
+
+//? Recipe action for uploading images
+
+router.post(
+  "/recipes/:recipeId/upload-image",
+  authenticateJWT,
+  findRecipeById,
+  uploadRecipeImage
+);
 
 //? Recipe Actions like liking and favoriting
 

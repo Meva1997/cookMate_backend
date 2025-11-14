@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from "express";
+import mongoose from "mongoose";
+import formidable from "formidable";
+import { v4 as uuid } from "uuid";
 import Recipe from "../models/Recipe";
 import User from "../models/User";
-import mongoose from "mongoose";
+import cloudinary from "../config/cloudinary";
 
 export const getAllRecipes = async (req: Request, res: Response) => {
   try {
@@ -257,3 +260,30 @@ export const unfavoriteRecipe = async (req: Request, res: Response) => {
 //     res.status(500).json({ error: "Internal server error" });
 //   }
 // };
+
+export const uploadRecipeImage = async (req: Request, res: Response) => {
+  const form = formidable({ multiples: false });
+
+  try {
+    form.parse(req, (error, fields, files) => {
+      cloudinary.uploader.upload(
+        files.file[0].filepath,
+        { folder: "recipes", public_id: uuid() },
+        async (err, result) => {
+          if (err) {
+            const errorMessage = new Error("Cloudinary upload failed");
+            return res.status(500).json({ error: errorMessage.message });
+          }
+          if (result) {
+            req.recipe.image = result.secure_url;
+            await req.recipe.save();
+            res.json({ imageUrl: result.secure_url });
+          }
+        }
+      );
+    });
+  } catch (error) {
+    const errorMessage = new Error("Image upload failed");
+    res.status(500).json({ error: errorMessage.message });
+  }
+};
