@@ -51,14 +51,45 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ error: errorMessage.message });
     }
 
-    const token = genereateJWT({
+    const payload = {
       _id: req.foundUser._id,
       handle: req.foundUser.handle,
       email: req.foundUser.email,
-    });
+    };
 
-    res.status(200).json(token);
+    const token = genereateJWT(payload);
+
+    res.status(200).json({ token, user: payload });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getCurrentUser = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      const errorMessage = new Error("User not authenticated");
+      return res.status(401).json({ error: errorMessage.message });
+    }
+
+    const user = await User.findById(userId).lean(); // Use lean() for a plain JavaScript object
+
+    if (!user) {
+      const errorMessage = new Error("User not found");
+      return res.status(404).json({ error: errorMessage.message });
+    }
+
+    const payload = {
+      id: user._id,
+      handle: user.handle,
+      email: user.email,
+    };
+
+    return res.status(200).json({ user: payload });
+  } catch (error) {
+    const errorMessage = new Error("Internal server error");
+    return res.status(500).json({ error: errorMessage.message });
   }
 };

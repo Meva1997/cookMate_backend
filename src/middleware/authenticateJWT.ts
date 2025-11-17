@@ -16,7 +16,11 @@ export const authenticateJWT = (
 
   try {
     const decoded = verifyJWT(token);
-    req.user = { id: decoded["_id"] }; // Attach user ID to request object
+    req.user = {
+      id: decoded["_id"],
+      handle: decoded["handle"],
+      email: decoded["email"],
+    }; // Attach user ID to request object
     next();
   } catch (error) {
     return res.status(403).json({ error: "Forbidden" });

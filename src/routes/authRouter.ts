@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createAccount, login } from "../handlers/authHandler";
+import { createAccount, getCurrentUser, login } from "../handlers/authHandler";
 import { body } from "express-validator";
 import { handleBodyErrors } from "../middleware/bodyErrors";
 import {
@@ -7,6 +7,7 @@ import {
   registerBody,
   loginEmailExists,
 } from "../middleware/user";
+import { authenticateJWT } from "../middleware/authenticateJWT";
 
 const router = Router();
 
@@ -166,5 +167,7 @@ router.post(
   handleBodyErrors,
   login
 );
+
+router.get("/auth/me", authenticateJWT, getCurrentUser);
 
 export default router;

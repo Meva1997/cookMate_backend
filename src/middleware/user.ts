@@ -1,15 +1,14 @@
-import { login } from "./../handlers/authHandler";
 import { Request, Response, NextFunction } from "express";
 import { body, param } from "express-validator";
 import User, { IUser } from "../models/User";
-import { Document } from "mongoose";
-import { handleBodyErrors } from "./bodyErrors";
 
 declare global {
   namespace Express {
     interface Request {
       user?: {
         id?: string;
+        handle?: string;
+        email?: string;
       };
       foundUser?: IUser;
     }
