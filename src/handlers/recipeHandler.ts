@@ -58,7 +58,7 @@ export const updateRecipe = async (req: Request, res: Response) => {
     const updateData = req.body;
 
     //Only author can update the recipe
-    if (req.recipe.author.toString() !== req.recipe.author.toString()) {
+    if (req.recipe.author.toString() !== req.user?.id) {
       const errorMessage = new Error("Unauthorized to update this recipe");
       return res.status(403).json({ error: errorMessage.message });
     }
@@ -75,6 +75,24 @@ export const updateRecipe = async (req: Request, res: Response) => {
       return res
         .status(200)
         .json("No changes detected, recipe remains the same");
+    }
+
+    try {
+      const prevImage: string = req.recipe.image;
+      const newImage: string = updateData.image;
+
+      if (prevImage && newImage && prevImage !== newImage) {
+        // if you stored public_id separately use that; here we try to extract it from the URL
+        const match = prevImage.match(/\/recipes\/([^\.\/]+)(?:\.[a-z0-9]+)?$/);
+        const publicId = match ? `recipes/${match[1]}` : null;
+        if (publicId) {
+          // ignore errors from cloudinary deletion
+          await cloudinary.uploader.destroy(publicId).catch(() => {});
+        }
+      }
+    } catch (error) {
+      const errorMessage = new Error("Previous image deletion failed");
+      res.status(500).json({ error: errorMessage.message });
     }
 
     Object.assign(req.recipe, updateData); // Merge updateData into the existing recipe
@@ -103,7 +121,38 @@ export const deleteRecipe = async (req: Request, res: Response) => {
       return res.status(403).json({ error: errorMessage.message });
     }
 
+    try {
+      if (recipe.image) {
+        // if you stored public_id separately use that; here we try to extract it from the URL
+        const match = recipe.image.match(
+          /\/recipes\/([^\.\/]+)(?:\.[a-z0-9]+)?$/
+        );
+        const publicId = match ? `recipes/${match[1]}` : null;
+        if (publicId) {
+          // ignore errors from cloudinary deletion
+          await cloudinary.uploader.destroy(publicId).catch(() => {});
+        }
+      }
+    } catch (err) {
+      // don't fail deletion if cloudinary removal fails
+      console.warn("Cloudinary delete failed", err);
+    }
+
     await recipe.deleteOne();
+
+    await User.findByIdAndUpdate(recipe.author, {
+      $pull: { recipes: recipe._id },
+    });
+
+    await User.updateMany(
+      { favorites: recipe._id },
+      { $pull: { favorites: recipe._id } }
+    );
+
+    await User.updateMany(
+      { "likedRecipes.recipeId": recipe._id },
+      { $pull: { likedRecipes: { recipeId: recipe._id } } }
+    );
 
     res.status(200).json("Recipe deleted successfully");
   } catch (error) {
