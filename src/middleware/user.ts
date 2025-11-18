@@ -107,6 +107,7 @@ export const registerBody = async (
   await body("handle").notEmpty().withMessage("Handle is required").run(req);
   await body("name").notEmpty().withMessage("Name is required").run(req);
   await body("email").isEmail().withMessage("Valid email is required").run(req);
+  await body("description").optional().isString().run(req);
   await body("password")
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters long")

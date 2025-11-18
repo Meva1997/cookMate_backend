@@ -9,6 +9,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
     handle: req.foundUser?.handle,
     name: req.foundUser?.name,
     email: req.foundUser?.email,
+    description: req.foundUser?.description,
     recipes: req.foundUser?.recipes,
     favorites: req.foundUser?.favorites,
   });
@@ -18,7 +19,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await User.find(
       {},
-      " _id handle name email favorites recipes"
+      " _id handle name email description favorites recipes"
     );
     res.status(200).json(users);
   } catch (error) {
@@ -29,7 +30,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const { handle, name, email } = req.body;
+    const { handle, name, email, description } = req.body;
 
     const handleSlug = slug(handle, "");
     const handleExists = await User.findOne({ handle: handleSlug });
@@ -42,7 +43,8 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     if (
       req.foundUser.handle === handleSlug &&
       req.foundUser.email === email &&
-      req.foundUser.name === name
+      req.foundUser.name === name &&
+      req.foundUser.description === description
     ) {
       return res.status(200).json("No changes detected in profile");
     }
@@ -50,6 +52,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     req.foundUser.handle = handle || handleSlug;
     req.foundUser.name = name || req.foundUser.name;
     req.foundUser.email = email || req.foundUser.email;
+    req.foundUser.description = description || req.foundUser.description;
 
     await req.foundUser.save();
 

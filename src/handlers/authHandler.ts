@@ -6,7 +6,7 @@ import { genereateJWT } from "../utils/jwt";
 
 export const createAccount = async (req: Request, res: Response) => {
   try {
-    const { password, handle, confirmPassword } = req.body;
+    const { password, handle, confirmPassword, description } = req.body;
 
     const handleSlug = slug(handle, "");
     const handleExists = await User.findOne({ handle: handleSlug });
@@ -24,6 +24,7 @@ export const createAccount = async (req: Request, res: Response) => {
     const user = new User(req.body);
     user.password = await hashPassword(password);
     user.handle = handleSlug;
+    user.description = description;
     await user.save();
 
     res.status(201).json("User registered successfully");

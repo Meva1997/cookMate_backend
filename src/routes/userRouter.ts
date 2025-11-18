@@ -146,6 +146,7 @@ router.put(
   body("handle").notEmpty().withMessage("Handle is required"),
   body("name").notEmpty().withMessage("Name is required"),
   body("email").notEmpty().isEmail().withMessage("Valid email is required"),
+  body("description").optional().isString(),
   emailExists,
   handleBodyErrors,
   updateUserProfile
