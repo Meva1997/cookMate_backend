@@ -8,7 +8,9 @@ import cloudinary from "../config/cloudinary";
 
 export const getAllRecipes = async (req: Request, res: Response) => {
   try {
-    const recipies = await Recipe.find();
+    const recipies = await Recipe.find()
+      .populate({ path: "author", select: "name id" })
+      .lean();
     res.status(200).json(recipies);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });

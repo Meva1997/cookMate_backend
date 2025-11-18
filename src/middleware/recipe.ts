@@ -67,7 +67,12 @@ export const findRecipeById = async (
       return res.status(404).json({ error: errorMessage.message });
     }
 
-    req.recipe = recipe;
+    const populatedRecipe = await recipe.populate({
+      path: "author",
+      select: "name id",
+    });
+
+    req.recipe = populatedRecipe;
 
     next();
   } catch (error) {
