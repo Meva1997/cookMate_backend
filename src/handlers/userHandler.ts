@@ -17,11 +17,24 @@ export const getUserProfile = async (req: Request, res: Response) => {
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const users = await User.find(
-      {},
-      " _id handle name email description favorites recipes"
+    const page = Math.max(1, parseInt(String(req.query.page ?? "1"), 10));
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(String(req.query.limit ?? "20"), 10))
     );
-    res.status(200).json(users);
+    const skip = (page - 1) * limit;
+
+    const [total, users] = await Promise.all([
+      User.countDocuments(),
+      User.find({}, "_id handle name email description favorites recipes")
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    const hasMore = page * limit < total;
+
+    res.status(200).json({ users, page, limit, total, hasMore });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }

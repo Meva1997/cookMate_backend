@@ -8,10 +8,28 @@ import cloudinary from "../config/cloudinary";
 
 export const getAllRecipes = async (req: Request, res: Response) => {
   try {
-    const recipies = await Recipe.find()
-      .populate({ path: "author", select: "name id" })
-      .lean();
-    res.status(200).json(recipies);
+    const page = Math.max(1, parseInt(String(req.query.page ?? "1"), 10));
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(String(req.query.limit ?? "20"), 10))
+    );
+    const skip = (page - 1) * limit;
+
+    const [total, recipes] = await Promise.all([
+      Recipe.countDocuments(),
+      Recipe.find()
+        .populate({ path: "author", select: "name id" })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    const hasMore = page * limit < total;
+
+    // const recipies = await Recipe.find()
+    //   .populate({ path: "author", select: "name id" })
+    //   .lean();
+    res.status(200).json({ recipes, page, limit, total, hasMore });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
