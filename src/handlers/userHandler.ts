@@ -110,10 +110,9 @@ export const getUserFavorites = async (req: Request, res: Response) => {
       return res.status(200).json([]);
     }
 
-    const recipes = await Recipe.find({
-      _id: { $in: favIds },
-      "likes.0": { $exists: true },
-    }).lean();
+    // Return all recipes whose ids are in the user's favorites.
+    // Do not filter by likes — favorites should show regardless of like count.
+    const recipes = await Recipe.find({ _id: { $in: favIds } }).lean();
 
     res.status(200).json(recipes);
   } catch (error) {
