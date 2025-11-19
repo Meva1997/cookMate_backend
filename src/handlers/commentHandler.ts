@@ -6,10 +6,18 @@ export const getCommentsByRecipeId = async (req: Request, res: Response) => {
     const { recipeId } = req.params;
 
     const comments = await Comment.find({ recipe: recipeId })
-      .populate("author", "handle")
-      .sort({ createdAt: -1 }); // Latest comments first
+      .populate("author", "handle name")
+      .sort({ createdAt: -1 }) // newest first
+      .lean();
 
-    res.status(200).json(comments);
+    const commentsDate = (comments || []).map((comment) => ({
+      ...comment,
+      createdAt: comment.createdAt
+        ? new Date(comment.createdAt).toISOString()
+        : null,
+    }));
+
+    res.status(200).json(commentsDate);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }

@@ -4,6 +4,7 @@ export interface IComment extends mongoose.Document {
   recipe: mongoose.Types.ObjectId; // Reference to Recipe model
   author: mongoose.Types.ObjectId; // Reference to User model
   text: string;
+  createdAt?: Date;
 }
 
 const commentSchema = new mongoose.Schema({
@@ -21,6 +22,10 @@ const commentSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 
