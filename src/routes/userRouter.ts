@@ -2,6 +2,7 @@ import { body, param } from "express-validator";
 import { Router } from "express";
 import { handleBodyErrors } from "../middleware/bodyErrors";
 import {
+  addUserImage,
   getAllUsers,
   getUserFavorites,
   getUserProfile,
@@ -243,5 +244,13 @@ router.put(
 router.get("/user/:userId/recipes", getUserRecipes);
 
 router.get("/user/:userId/favorites", getUserFavorites);
+
+router.post(
+  "/user/:userId/image",
+  authenticateJWT,
+  body("image").isString().notEmpty().withMessage("Image is required"),
+  handleBodyErrors,
+  addUserImage
+);
 
 export default router;
