@@ -9,6 +9,7 @@ export interface IUser extends mongoose.Document {
   description?: string;
   favorites: string[];
   recipes: string[];
+  image?: string;
 }
 
 //User schema definition
@@ -51,6 +52,10 @@ const userSchema = new mongoose.Schema({
       ref: "Recipe",
     },
   ],
+  image: {
+    type: String,
+    trim: true,
+  },
 });
 
 const User = mongoose.model<IUser>("User", userSchema); // Create a Mongoose model named "User" using the userSchema

@@ -5,6 +5,7 @@ import {
   addUserImage,
   getAllUsers,
   getUserFavorites,
+  getUserImage,
   getUserProfile,
   getUserRecipes,
   updateUserProfile,
@@ -245,12 +246,8 @@ router.get("/user/:userId/recipes", getUserRecipes);
 
 router.get("/user/:userId/favorites", getUserFavorites);
 
-router.post(
-  "/user/:userId/image",
-  authenticateJWT,
-  body("image").isString().notEmpty().withMessage("Image is required"),
-  handleBodyErrors,
-  addUserImage
-);
+router.post("/user/:userId/image", authenticateJWT, addUserImage);
+
+router.get("/user/:userId/image", getUserImage);
 
 export default router;

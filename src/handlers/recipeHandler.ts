@@ -311,8 +311,16 @@ export const uploadRecipeImage = async (req: Request, res: Response) => {
 
   try {
     form.parse(req, (error, fields, files) => {
+      const filesObj = files as any;
+      const fileEntryCandidate = filesObj?.file ?? Object.values(filesObj || {})[0];
+      const fileItem = Array.isArray(fileEntryCandidate) ? fileEntryCandidate[0] : fileEntryCandidate;
+
+      if (!fileItem || !fileItem.filepath) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
       cloudinary.uploader.upload(
-        files.file[0].filepath,
+        fileItem.filepath,
         { folder: "recipes", public_id: uuid() },
         async (err, result) => {
           if (err) {
