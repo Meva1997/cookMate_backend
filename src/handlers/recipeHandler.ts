@@ -77,8 +77,26 @@ export const updateRecipe = async (req: Request, res: Response) => {
   try {
     const updateData = req.body;
 
-    //Only author can update the recipe
-    if (req.recipe.author.toString() !== req.user?.id) {
+    // Only author can update the recipe
+    // Handle cases where `req.recipe.author` may be an ObjectId, a populated user object,
+    // or a string. Also tolerate `req.user.id` or `req.user._id`.
+    const recipeAuthorRaw = req.recipe.author;
+    const recipeAuthorId = recipeAuthorRaw
+      ? typeof recipeAuthorRaw === "object"
+        ? String(recipeAuthorRaw._id ?? recipeAuthorRaw.id ?? recipeAuthorRaw)
+        : String(recipeAuthorRaw)
+      : "";
+    // const currentUserId = String(req.user?.id ?? (req.user as any)?._id ?? "");
+    const currentUserId = String(req.user?.id);
+
+    if (!currentUserId || recipeAuthorId !== currentUserId) {
+      // helpful debug log for development (remove or lower log level in production)
+      // console.warn("Unauthorized update attempt", {
+      //   recipeAuthorId,
+      //   currentUserId,
+      //   recipeAuthorRaw,
+      //   user: req.user,
+      // });
       const errorMessage = new Error("Unauthorized to update this recipe");
       return res.status(403).json({ error: errorMessage.message });
     }
