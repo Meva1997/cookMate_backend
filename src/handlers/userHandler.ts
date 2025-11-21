@@ -107,15 +107,17 @@ export const getUserFavorites = async (req: Request, res: Response) => {
       return res.status(404).json({ error: errorMessage.message });
     }
 
-    const favIds = Array.isArray(user.favorites) ? user.favorites : [];
+    const favIds = user.favorites.map((fav) => fav.toString());
 
     if (favIds.length === 0) {
-      return res.status(200).json([]);
+      return res.status(200).json("No favorite recipes found for this user.");
     }
 
-    // Return all recipes whose ids are in the user's favorites.
-    // Do not filter by likes — favorites should show regardless of like count.
-    const recipes = await Recipe.find({ _id: { $in: favIds } }).lean();
+    // Return all recipes whose ids are in the user's favorites and populate author info
+    // Populate only the fields we need from author to avoid sending sensitive data
+    const recipes = await Recipe.find({ _id: { $in: favIds } })
+      .populate("author", "name")
+      .lean();
 
     res.status(200).json(recipes);
   } catch (error) {
