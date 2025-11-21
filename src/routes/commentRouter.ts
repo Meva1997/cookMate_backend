@@ -127,6 +127,7 @@ router.post(
   authenticateJWT,
   validateRecipeIdParam,
   body("text").isString().withMessage("Comment text is required"),
+  body("authorImage").isString(),
   handleBodyErrors,
   addCommentToRecipe
 );

@@ -5,6 +5,7 @@ export interface IComment extends mongoose.Document {
   author: mongoose.Types.ObjectId; // Reference to User model
   text: string;
   createdAt?: Date;
+  authorImage?: string;
 }
 
 const commentSchema = new mongoose.Schema({
@@ -26,6 +27,10 @@ const commentSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  authorImage: {
+    type: String,
+    default: null,
   },
 });
 
