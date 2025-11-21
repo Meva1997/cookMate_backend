@@ -26,12 +26,13 @@ export const getCommentsByRecipeId = async (req: Request, res: Response) => {
 export const addCommentToRecipe = async (req: Request, res: Response) => {
   try {
     const { recipeId } = req.params;
-    const { text } = req.body;
+    const { text, authorImage } = req.body;
 
     const newComment = new Comment({
       recipe: recipeId,
       text,
       author: req.user?.id,
+      authorImage,
     });
 
     await newComment.save();
