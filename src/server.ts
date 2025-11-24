@@ -33,8 +33,4 @@ app.use(
   swaggerUI.setup(swaggerSpec, swaggerUiOptions)
 );
 
-app.get("/", (req, res) => {
-  res.send("Welcome to CookMate API");
-});
-
 export default app;
